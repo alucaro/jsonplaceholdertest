@@ -1,0 +1,41 @@
+body {
+    font-size: 140%;
+    padding: 1.5rem;
+}
+
+h2 {
+    text-align: center;
+    padding: 20px 0;
+}
+
+table caption {
+    padding: .5em 0;
+}
+
+table.dataTable th,
+table.dataTable td {
+    white-space: nowrap;
+}
+
+.title-address {
+    margin-bottom: 0;
+}
+
+.btn-options {
+    margin: 0 3px;
+}
+
+.p {
+    text-align: center;
+    padding-top: 140px;
+    font-size: 14px;
+}
+
+.alert {
+    display: none;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 33%;
+    margin: 20px;
+}
