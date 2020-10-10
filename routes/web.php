@@ -27,7 +27,4 @@ Route::get('/albums/{id}/photos', 'DataController@getPhotosAlbum');
 Route::get('/users/{id}/albums', 'DataController@getAlbumsUser');
 Route::get('/users/{id}/todos', 'DataController@getTodosUser');
 Route::get('/users/{id}/posts', 'DataController@getPostsUser');
-
-
-
 Route::get('/filter/{endpoint}/{field}/{value}', 'DataController@filter');
