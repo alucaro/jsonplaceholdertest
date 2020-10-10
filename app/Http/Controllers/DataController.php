@@ -190,6 +190,7 @@ class DataController extends Controller
     public function validateRequestByCategory(string $endpoint, array $data, $action = "create") 
     {
         $valid = false;
+          
         $operation = $action == "create" ? "create" : "edit";
         switch ($endpoint) {
             case 'users'   : $valid = $this->validateUser($data, $operation);     break;
@@ -204,7 +205,7 @@ class DataController extends Controller
     }
 
     public function validateUser(array $data, $action = "create") 
-    {  
+    {
         $isValid = true;
 
         if ($action == "edit")

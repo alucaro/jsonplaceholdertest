@@ -41,7 +41,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                        <h4 class="modal-title" id="myModalLabel">Datos del Post</h4>
+                        <h4 class="modal-title" id="post_title_modal">Datos del Post</h4>
                     </div>
                     <div class="modal-body" id="modal-body">
                         <form class="form-horizontal" id="form_post_modal">
@@ -418,12 +418,6 @@
             </button>
         </div>
 
-        <div class="alert alert-danger">
-            <button data-dismiss="alert" type="button" class="close" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-        </div>
-
     </div>
 
 
@@ -589,6 +583,36 @@
             appendControls(category);
         }
 
+        function appendControls(category) {
+
+            $('div[id$="_length"]').append(
+                '<label style="margin-left: 20px; margin-right: 5px;">Categoria</label>' +
+                '<select id="categoria" class="form-control input-sm" onchange="populateTable()" >' +
+                '<option value="users">Usuarios</option>' +
+                '<option value="comments">Comentarios</option>' +
+                '<option value="albums">Albumes</option>' +
+                '<option value="photos">Fotos</option>' +
+                '<option value="posts">Posts</option>' +
+                '<option value="todos">Todos</option>' +
+                '</select> ');
+
+            $("#categoria").val(category);
+
+            $('div[id$="_length"]').append(
+                '<label style = "margin-left: 20px" >Id ' +
+                '<input id="id" class="form-control input-sm" style="width:4rem"></input>' +
+                '</label>');
+
+            $('div[id$="_length"]').append(
+                '<button id="buscar" type="button" class="btn btn-primary btn-sm" style="width:8rem; margin-left: 10px">Consultar</button>');
+
+            $('div[id$="_length"]').append(
+                '<button id="adicionar" type="button" class="btn btn-success btn-sm glyphicon glyphicon-plus" data-toggle="modal" data-target="#myModal" style="width:4rem; margin-left: 20px" onclick="createRegisterAction()"></button>');
+
+            $("#adicionar").attr('data-target', '#' + category + '_modal');            
+
+        }
+
         async function populateTable() {
             var category = document.getElementById("categoria").value;
             initTable(category);
@@ -608,8 +632,7 @@
             return data;
         }
 
-        async function editRegister(id, category, data) {
-
+        async function editRegister(id, category, data) {            
             if (category === "") return;
             await fetch(baseUrl + category + '/' + id, {
                     method: 'PUT',
@@ -624,8 +647,33 @@
                 .then((json) => {
                     data = json;
                 })
+            return data;                       
+        }
 
+        async function craeteRegister(category, data) 
+        {
+            if (category === "") return;
+            await fetch(baseUrl + category, {
+                    method: 'POST',
+                    body: JSON.stringify(data),
+                    headers: {
+                        'Content-type': 'application/json; charset=UTF-8',
+                    },
+                })
+                .then((response) =>
+                    response.json()
+                )
+                .then((json) => {
+                    data = json;
+                })
             return data;
+        }
+
+        function createRegisterAction() 
+        {
+            var category = $("#categoria").val();
+            openModalClean(category);
+            $('#' + category + '_modal input[name="registerId"]').val("-1");
         }
 
         function editRegisterAction(event) {
@@ -661,6 +709,39 @@
 
         }
 
+        async function openModalClean(category) {
+            
+            var id = -1;
+            var category = $("#categoria").val();            
+            var data = {}
+            switch (category) {
+                case 'users':
+                    data = {"name": "","username": "","email": "","address": {"street": "","suite": "","city": "","zipcode": "","geo": {"lat": "","lng": ""}},"phone": "","website": "","company": {"name": "","catchPhrase": "","bs": ""}};
+                    loadDataUserModal(id, data)
+                    break;
+                case 'posts':
+                    data = {"userId": "","title": "","body": ""};
+                    loadDataPostModal(id, data)                    
+                    break;
+                case 'comments':
+                    data = {"name": "","email": "","body": ""};
+                    loadDataCommentModal(id, data)
+                    break;
+                case 'photos':
+                    data = {"title": "","url": "","thumbnailUrl": ""};
+                    loadDataPhotoModal(id, data)
+                    break;
+                case 'todos':
+                    data = {"title": "", "completed": false};
+                    loadDataTodoModal(id, data)
+                    break;
+                case 'albums':
+                    data = {"title": ""};
+                    loadDataAlbumModal(id, data)
+                    break;
+            }
+        }
+
         async function openModalWithData(id, category) {
             var data = await getRegisterById(id, category);
             switch (category) {
@@ -683,7 +764,6 @@
                     loadDataAlbumModal(id, data)
                     break;
             }
-
         }
 
         function loadDataUserModal(id, data) {
@@ -739,117 +819,145 @@
             $("#album_title").val(data.title);
         }
 
-        function registerSubmitUserForm() {
-            $("#form_user_modal").submit(async function(event) {
-                event.preventDefault();
-                var data = {
-                    address: {
-                        geo: {}
-                    },
-                    company: {}
-                };
-                var id = $("#users_modal input[name='registerId']").val();
+        async function submitUserForm(action = 'create') {   
+
+            event.preventDefault();
+            var data = {
+                address: {
+                    geo: {}
+                },
+                company: {}
+            };
+            var id = $("#users_modal input[name='registerId']").val();
+            
+
+            data.name = $("#user_name").val();
+            data.username = $("#user_user").val();
+            data.email = $("#user_email").val();
+            data.phone = $("#user_phone").val();
+            data.website = $("#user_web").val();
+
+            data.address.city = $("#user_city").val();
+            data.address.geo.lat = $("#user_lat").val();
+            data.address.suite = $("#user_apartment").val();
+            data.address.zipcode = $("#user_zipcode").val();
+            data.address.geo.lng = $("#user_long").val();
+
+            data.company.name = $("#user_company").val();
+            data.company.catchPhrase = $("#user_slogan").val();
+            data.company.bs = $("#user_bs").val();
+
+            var category = $("#categoria").val();
+
+            if (action == 'create') {
+                response = await craeteRegister(category, data);
+                $("#users_modal .close").click();
+                $(".alert").text("Usuario creado exitosamente.");
+                $(".alert").show().delay(2000).slideUp("slow");
+            } else if(action == 'edit'){
                 data.id = id;
-
-                data.name = $("#user_name").val();
-                data.username = $("#user_user").val();
-                data.email = $("#user_email").val();
-                data.phone = $("#user_phone").val();
-                data.website = $("#user_web").val();
-
-                data.address.city = $("#user_city").val();
-                data.address.geo.lat = $("#user_lat").val();
-                data.address.suite = $("#user_apartment").val();
-                data.address.zipcode = $("#user_zipcode").val();
-                data.address.geo.lng = $("#user_long").val();
-
-                data.company.name = $("#user_company").val();
-                data.company.catchPhrase = $("#user_slogan").val();
-                data.company.bs = $("#user_bs").val();
-
-                var category = $("#categoria").val();
-                var response = await editRegister(id, category, data);
-
+                response = await editRegister(id, category, data);
                 var id = row.find("td").eq(0).html(response.id);
                 var id = row.find("td").eq(1).html(response.name);
                 var id = row.find("td").eq(2).html(response.username);
-
                 $("#users_modal .close").click();
                 $(".alert").text("Usuario editado exitosamente.");
                 $(".alert").show().delay(2000).slideUp("slow");
+            }
 
-            });
+                        
         }
 
-        function registerSubmitPostForm() {
-            $("#form_post_modal").submit(async function(event) {
-                event.preventDefault();
-                var data = {};
-                var id = $("#posts_modal input[name='registerId']").val();
-                var userId = $("#posts_modal input[name='registerSecondId']").val();
+        async function submitPostForm(action = 'create') {    
+
+            event.preventDefault();
+            var data = {};
+            var id = $("#posts_modal input[name='registerId']").val();
+            var userId = $("#posts_modal input[name='registerSecondId']").val();
+            
+            data.userId = userId;
+
+            data.title = $("#post_title").val();
+            data.body = $("#post_body").val();
+
+            var category = $("#categoria").val();
+            
+            if (action == 'create') {
+                response = await craeteRegister(category, data);
+                $("#posts_modal .close").click();
+                $(".alert").text("Post creado exitosamente.");
+                $(".alert").show().delay(2000).slideUp("slow");
+            } else if(action == 'edit'){
                 data.id = id;
-                data.userId = userId;
-
-                data.title = $("#post_title").val();
-                data.body = $("#post_body").val();
-
-                var category = $("#categoria").val();
-                var response = await editRegister(id, category, data);
-
+                response = await editRegister(id, category, data);
                 var id = row.find("td").eq(0).html(response.userId);
                 var id = row.find("td").eq(1).html(response.id);
                 var id = row.find("td").eq(2).html(response.title);
-
                 $("#posts_modal .close").click();
                 $(".alert").text("Post editado exitosamente.");
                 $(".alert").show().delay(2000).slideUp("slow");
-
-            });
+            }
         }
 
-        function registerSubmitCommentForm() {
-            $("#form_comment_modal").submit(async function(event) {
-                event.preventDefault();
-                var data = {};
-                var postId = $("#comments_modal input[name='registerId']").val();
-                var id = $("#comments_modal input[name='registerSecondId']").val();
+        async function submitCommentForm(action = 'create') {  
+
+            event.preventDefault();
+            var data = {};
+            var postId = $("#comments_modal input[name='registerId']").val();
+            var id = $("#comments_modal input[name='registerSecondId']").val();
+            
+            data.postId = postId;
+
+            data.title = $("#comment_name").val();
+            data.email = $("#comment_email").val();
+            data.body = $("#comment_body").val();
+
+            var category = $("#categoria").val();
+            
+            if (action == 'create') {
+                response = await craeteRegister(category, data);
+                $("#comments_modal .close").click();
+                $(".alert").text("Comentario creado exitosamente.");
+                $(".alert").show().delay(2000).slideUp("slow");
+                
+            } else if(action == 'edit'){
                 data.id = id;
-                data.postId = postId;
-
-                data.title = $("#comment_name").val();
-                data.email = $("#comment_email").val();
-                data.body = $("#comment_body").val();
-
-                var category = $("#categoria").val();
-                var response = await editRegister(id, category, data);
-
+                response = await editRegister(id, category, data);
                 var id = row.find("td").eq(0).html(response.postId);
                 var id = row.find("td").eq(1).html(response.id);
                 var id = row.find("td").eq(2).html(response.title);
 
                 $("#comments_modal .close").click();
                 $(".alert").text("Comentario editado exitosamente.");
-                $(".alert").show().delay(2000).slideUp("slow");
+                $(".alert").show().delay(2000).slideUp("slow");   
+            }
 
-            });
+                     
         }
 
-        function registerSubmitPhotoForm() {
-            $("#form_photo_modal").submit(async function(event) {
-                event.preventDefault();
-                var data = {};
-                var albumId = $("#photos_modal input[name='registerId']").val();
-                var id = $("#photos_modal input[name='registerSecondId']").val();
+        async function submitPhotoForm(action = 'create') {
+            
+            event.preventDefault();
+            var data = {};
+            var albumId = $("#photos_modal input[name='registerId']").val();
+            var id = $("#photos_modal input[name='registerSecondId']").val();
+            
+            data.albumId = albumId;
+
+            data.title = $("#photo_title").val();
+            data.email = $("#photo_url").val();
+            data.thumbnailUrl = $("#photo_thumbnail").val();
+
+            var category = $("#categoria").val();
+
+            if (action == 'create') {
+                response = await craeteRegister(category, data);
+                $("#photos_modal .close").click();
+                $(".alert").text("Foto creada exitosamente.");
+                $(".alert").show().delay(2000).slideUp("slow");
+            } else if(action == 'edit'){
                 data.id = id;
-                data.albumId = albumId;
-
-                data.title = $("#photo_title").val();
-                data.email = $("#photo_url").val();
-                data.thumbnailUrl = $("#photo_thumbnail").val();
-
-                var category = $("#categoria").val();
-                var response = await editRegister(id, category, data);
-
+                response = await editRegister(id, category, data);
                 var id = row.find("td").eq(0).html(response.albumId);
                 var id = row.find("td").eq(1).html(response.id);
                 var id = row.find("td").eq(2).html(response.title);
@@ -857,50 +965,62 @@
                 $("#photos_modal .close").click();
                 $(".alert").text("Foto editada exitosamente.");
                 $(".alert").show().delay(2000).slideUp("slow");
-
-            });
+            }                        
         }
 
-        function registerSubmitTodoForm() {
-            $("#form_todo_modal").submit(async function(event) {
-                event.preventDefault();
-                var data = {};
-                var userId = $("#todos_modal input[name='registerId']").val();
-                var id = $("#todos_modal input[name='registerSecondId']").val();
+        async function submitTodoForm(action = 'create') {
+            
+            event.preventDefault();
+            var data = {};
+            var userId = $("#todos_modal input[name='registerId']").val();
+            var id = $("#todos_modal input[name='registerSecondId']").val();
+            
+            data.userId = userId;
+
+            data.title = $("#todo_title").val();
+            data.completed = $("input[name='radios']:checked").val();
+
+            var category = $("#categoria").val();
+
+            if (action == 'create') {
+                response = await craeteRegister(category, data);
+                $("#todos_modal .close").click();
+                $(".alert").text("Tarea creada exitosamente.");
+                $(".alert").show().delay(2000).slideUp("slow");
+            } else if(action == 'edit'){
                 data.id = id;
-                data.userId = userId;
-
-                data.title = $("#todo_title").val();
-                data.completed = $("input[name='radios']:checked").val();
-
-                var category = $("#categoria").val();
-                var response = await editRegister(id, category, data);
-
+                response = await editRegister(id, category, data);
                 var id = row.find("td").eq(0).html(response.userId);
                 var id = row.find("td").eq(1).html(response.id);
                 var id = row.find("td").eq(2).html(response.title);
-
                 $("#todos_modal .close").click();
-                $(".alert").text("tarea editada exitosamente.");
+                $(".alert").text("Tarea editada exitosamente.");
                 $(".alert").show().delay(2000).slideUp("slow");
-
-            });
+            }                        
         }
 
-        function registerSubmitAlbumForm() {
-            $("#form_album_modal").submit(async function(event) {
-                event.preventDefault();
-                var data = {};
-                var userId = $("#albums_modal input[name='registerId']").val();
-                var id = $("#albums_modal input[name='registerSecondId']").val();
+        async function submitAlbumForm(action = 'create') {
+            
+            event.preventDefault();
+            var data = {};
+            var response = null;
+            var userId = $("#albums_modal input[name='registerId']").val();
+            var id = $("#albums_modal input[name='registerSecondId']").val();
+            
+            data.userId = userId;
+
+            data.title = $("#album_title").val();
+
+            var category = $("#categoria").val();
+            
+            if (action == 'create') {
+                response = await craeteRegister(category, data);
+                $("#albums_modal .close").click();
+                $(".alert").text("Album creado exitosamente.");
+                $(".alert").show().delay(2000).slideUp("slow");
+            } else if(action == 'edit'){
                 data.id = id;
-                data.userId = userId;
-
-                data.title = $("#album_title").val();
-
-                var category = $("#categoria").val();
-                var response = await editRegister(id, category, data);
-
+                response = await editRegister(id, category, data);
                 var id = row.find("td").eq(0).html(response.userId);
                 var id = row.find("td").eq(1).html(response.id);
                 var id = row.find("td").eq(2).html(response.title);
@@ -908,9 +1028,7 @@
                 $("#albums_modal .close").click();
                 $(".alert").text("Album editado exitosamente.");
                 $(".alert").show().delay(2000).slideUp("slow");
-
-
-            });
+            }            
         }
 
         function deleteRegister() {
@@ -930,50 +1048,13 @@
                 $("#delete_modal .close").click();
                 $(".alert").text("Registro eliminado exitosamente.");
                 $(".alert").show().delay(2000).slideUp("slow");
-
             });
         }
 
-        function appendControls(category) {
-
-            $('div[id$="_length"]').append(
-                '<label style="margin-left: 20px; margin-right: 5px;">Categoria</label>' +
-                '<select id="categoria" class="form-control input-sm" onchange="populateTable()" >' +
-                '<option value="users">Usuarios</option>' +
-                '<option value="comments">Comentarios</option>' +
-                '<option value="albums">Albumes</option>' +
-                '<option value="photos">Fotos</option>' +
-                '<option value="posts">Posts</option>' +
-                '<option value="todos">Todos</option>' +
-                '</select> ');
-
-            $("#categoria").val(category);
-
-            $('div[id$="_length"]').append(
-                '<label style = "margin-left: 20px" >Id ' +
-                '<input id="id" class="form-control input-sm" style="width:4rem"></input>' +
-                '</label>');
-
-            $('div[id$="_length"]').append(
-                '<button id="buscar" type="button" class="btn btn-primary btn-sm" style="width:8rem; margin-left: 10px">Consultar</button>');
-
-            $('div[id$="_length"]').append(
-                '<button id="adicionar" type="button" class="btn btn-success btn-sm glyphicon glyphicon-plus" data-toggle="modal" data-target="#myModal" style="width:4rem; margin-left: 20px"></button>');
-
-            $("#adicionar").attr('data-target', '#' + category + '_modal');            
-
-        }
 
         $(document).ready(function() {
 
             initTable('users');
-
-            registerSubmitCommentForm();
-            registerSubmitPhotoForm();
-            registerSubmitAlbumForm();
-            registerSubmitUserForm();
-            registerSubmitPostForm();
-            registerSubmitTodoForm();
             deleteRegister();
 
             $("#form_post_modal").validate({
@@ -996,6 +1077,14 @@
                         required: "Este campo es requerido",
                         minlength: "Debe tener al menos 3 letras"
                     }
+                },
+                submitHandler: function(form) {
+                    var category = $("#categoria").val();            
+                    var action = $('#' + category + '_modal input[name="registerId"]').val();
+                    if (action == -1) 
+                        submitPostForm('create');
+                    else 
+                        submitPostForm('edit');
                 },
                 highlight: function(element) {
                     $(element).closest('.form-group').addClass('has-error');
@@ -1026,6 +1115,14 @@
                         required: "Este campo es requerido",
                         minlength: "Debe tener al menos 3 letras"
                     }
+                },
+                submitHandler: function(form) {
+                    var category = $("#categoria").val();            
+                    var action = $('#' + category + '_modal input[name="registerId"]').val();
+                    if (action == -1) 
+                        submitAlbumForm('create');
+                    else 
+                        submitAlbumForm('edit');
                 },
                 highlight: function(element) {
                     $(element).closest('.form-group').addClass('has-error');
@@ -1073,6 +1170,14 @@
                         minlength: "Debe tener al menos 3 letras"
                     }
                 },
+                submitHandler: function(form) {
+                    var category = $("#categoria").val();            
+                    var action = $('#' + category + '_modal input[name="registerId"]').val();
+                    if (action == -1) 
+                        submitCommentForm('create');
+                    else 
+                        submitCommentForm('edit');
+                },
                 highlight: function(element) {
                     $(element).closest('.form-group').addClass('has-error');
                 },
@@ -1119,6 +1224,14 @@
                         minlength: "Debe tener al menos 3 letras"
                     }
                 },
+                submitHandler: function(form) {
+                    var category = $("#categoria").val();            
+                    var action = $('#' + category + '_modal input[name="registerId"]').val();
+                    if (action == -1) 
+                        submitPhotoForm('create');
+                    else 
+                        submitPhotoForm('edit');
+                },
                 highlight: function(element) {
                     $(element).closest('.form-group').addClass('has-error');
                 },
@@ -1148,6 +1261,14 @@
                         required: "Este campo es requerido",
                         minlength: "Debe tener al menos 3 letras"
                     }
+                },
+                submitHandler: function(form) {
+                    var category = $("#categoria").val();            
+                    var action = $('#' + category + '_modal input[name="registerId"]').val();
+                    if (action == -1) 
+                        submitTodoForm('create');
+                    else 
+                        submitTodoForm('edit');
                 },
                 highlight: function(element) {
                     $(element).closest('.form-group').addClass('has-error');
@@ -1266,6 +1387,14 @@
                     user_slogan: {
                         minlength: "Debe tener al menos 3 letras"
                     }
+                },
+                submitHandler: function(form) {
+                    var category = $("#categoria").val();            
+                    var action = $('#' + category + '_modal input[name="registerId"]').val();
+                    if (action == -1) 
+                        submitUserForm('create');
+                    else 
+                        submitUserForm('edit');
                 },
                 highlight: function(element) {
                     $(element).closest('.form-group').addClass('has-error');
