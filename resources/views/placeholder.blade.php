@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/1.0.4/css/dataTables.responsive.css" />
 
     
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
+    <link href="https://testplaceholder.herokuapp.com/css/app.css" rel="stylesheet">
 
 </head>
 
