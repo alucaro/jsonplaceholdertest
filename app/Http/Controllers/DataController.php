@@ -273,7 +273,7 @@ class DataController extends Controller
         if ($action == "edit")
             $isValid &= $this->validateRegister($data, "required|numeric"      , "id");
         $isValid &= $this->validateRegister($data, "required|numeric", "postId");        
-        $isValid &= $this->validateRegister($data, "required", "title");
+        $isValid &= $this->validateRegister($data, "required", "name");
         $isValid &= $this->validateRegister($data, "required|email", "email");
         $isValid &= $this->validateRegister($data, "required", "body");
 

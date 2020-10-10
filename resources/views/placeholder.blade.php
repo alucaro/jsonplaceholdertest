@@ -907,7 +907,7 @@
             
             data.postId = postId;
 
-            data.title = $("#comment_name").val();
+            data.name = $("#comment_name").val();
             data.email = $("#comment_email").val();
             data.body = $("#comment_body").val();
 
@@ -925,7 +925,7 @@
                 response = await editRegister(id, category, data);
                 var id = row.find("td").eq(0).html(response.postId);
                 var id = row.find("td").eq(1).html(response.id);
-                var id = row.find("td").eq(2).html(response.title);
+                var id = row.find("td").eq(2).html(response.name);
 
                 $("#comments_modal .close").click();
                 $(".alert").text("Comentario editado exitosamente.");
@@ -1080,7 +1080,7 @@
                         dataRow = {"albumId": response.albumId,"id": response.id, "title": response.title};
                         break;
                     case 'comments':  
-                        dataRow = {"postId": response.postId,"id": response.id, "title": response.title};
+                        dataRow = {"postId": response.postId,"id": response.id, "name": response.name};
                         break;                    
                 }
                 if (table) {
@@ -1093,14 +1093,7 @@
                         table.order([ 0, 'desc' ]).draw();
                     else 
                         table.order([ 1, 'desc' ]).draw();
-                }
-                // if (table)
-                //     table.row.add(dataRow).draw();
-                // var rowCount = table.data().length-1;
-                // var tempRow = table.row(0).data();
-                // var lastRow = table.row(rowCount).data();
-                // table.row(0).data(lastRow);
-                // table.row(rowCount).data(tempRow);
+                }                
         }
 
 
