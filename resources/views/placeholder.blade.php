@@ -431,7 +431,7 @@
 
     <script>
         var category = 'users';
-        var baseUrl = 'http://127.0.0.1:8000/';
+        var baseUrl = 'https://testplaceholder.herokuapp.com/';
         var columns = [];
         var table = null;
         var row = null;
