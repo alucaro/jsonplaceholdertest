@@ -244,6 +244,7 @@
                     <div class="modal-body" id="modal-body">
                         <form class="form-horizontal" id="form_user_modal">
                             <input name="registerId" type="hidden">
+                            <input name="registerSecondId" type="hidden">
                             <fieldset>
                                 <div class="row">
                                     <div class="container col-md-12">
@@ -527,6 +528,8 @@
             var id = row.find("td").eq(column).html();
             var data = null;
 
+            $("#" + category + "_modal input[name='registerId']").val(id);
+
             await fetch(baseUrl + type + '/' + id + '/' + nested)
                 .then((response) =>
                     response.json()
@@ -537,7 +540,8 @@
             console.log(data);
             var columns = getColumnNames(data, category);
             createTable(data, columns, category);
-            appendControls(category);
+            appendControls(category, true);
+           
         }
 
         function createTable(data, columns, category) {
@@ -563,7 +567,7 @@
 
 
 
-            $('table').DataTable({
+            table = $('table').DataTable({
                 data: data,
                 columns: columns,
                 "columnDefs": [btnOptions, btnActions],
@@ -583,7 +587,7 @@
             appendControls(category);
         }
 
-        function appendControls(category) {
+        function appendControls(category, visible = false) {
 
             $('div[id$="_length"]').append(
                 '<label style="margin-left: 20px; margin-right: 5px;">Categoria</label>' +
@@ -598,16 +602,9 @@
 
             $("#categoria").val(category);
 
-            $('div[id$="_length"]').append(
-                '<label style = "margin-left: 20px" >Id ' +
-                '<input id="id" class="form-control input-sm" style="width:4rem"></input>' +
-                '</label>');
-
-            $('div[id$="_length"]').append(
-                '<button id="buscar" type="button" class="btn btn-primary btn-sm" style="width:8rem; margin-left: 10px">Consultar</button>');
-
-            $('div[id$="_length"]').append(
-                '<button id="adicionar" type="button" class="btn btn-success btn-sm glyphicon glyphicon-plus" data-toggle="modal" data-target="#myModal" style="width:4rem; margin-left: 20px" onclick="createRegisterAction()"></button>');
+            if (category == 'users' || visible == true)    
+                $('div[id$="_length"]').append(
+                    '<button id="adicionar" type="button" class="btn btn-success btn-sm glyphicon glyphicon-plus" data-toggle="modal" data-target="#myModal" style="width:4rem; margin-left: 20px" onclick="createRegisterAction()"></button>');
 
             $("#adicionar").attr('data-target', '#' + category + '_modal');            
 
@@ -673,7 +670,7 @@
         {
             var category = $("#categoria").val();
             openModalClean(category);
-            $('#' + category + '_modal input[name="registerId"]').val("-1");
+            $('#' + category + '_modal input[name="registerSecondId"]').val("-1");
         }
 
         function editRegisterAction(event) {
@@ -699,12 +696,12 @@
             var name = row.find("td").eq(2).html();
             var category = $("#categoria").val();
             deleteBtn.attr('data-target', '#delete_modal');
-            $('#delete_modal input[name="registerId"]').val(id);
+            $('#delete_modal input[name="registerSecondId"]').val(id);
             $('#delete_modal label[name="deleteTitle"]').text(name);
 
             if (category != 'users') {
                 var secondId = row.find("td").eq(1).html();
-                $('#' + category + '_modal input[name="registerSecondId"]').val(secondId);
+                $('#delete_modal input[name="registerSecondId"]').val(secondId);
             }
 
         }
@@ -851,6 +848,7 @@
 
             if (action == 'create') {
                 response = await craeteRegister(category, data);
+                createRowByCategory(category, response);
                 $("#users_modal .close").click();
                 $(".alert").text("Usuario creado exitosamente.");
                 $(".alert").show().delay(2000).slideUp("slow");
@@ -872,8 +870,8 @@
 
             event.preventDefault();
             var data = {};
-            var id = $("#posts_modal input[name='registerId']").val();
-            var userId = $("#posts_modal input[name='registerSecondId']").val();
+            var userId = $("#posts_modal input[name='registerId']").val();
+            var id = $("#posts_modal input[name='registerSecondId']").val();
             
             data.userId = userId;
 
@@ -884,6 +882,7 @@
             
             if (action == 'create') {
                 response = await craeteRegister(category, data);
+                createRowByCategory(category, response);
                 $("#posts_modal .close").click();
                 $(".alert").text("Post creado exitosamente.");
                 $(".alert").show().delay(2000).slideUp("slow");
@@ -916,6 +915,7 @@
             
             if (action == 'create') {
                 response = await craeteRegister(category, data);
+                createRowByCategory(category, response);
                 $("#comments_modal .close").click();
                 $(".alert").text("Comentario creado exitosamente.");
                 $(".alert").show().delay(2000).slideUp("slow");
@@ -952,6 +952,7 @@
 
             if (action == 'create') {
                 response = await craeteRegister(category, data);
+                createRowByCategory(category, response);
                 $("#photos_modal .close").click();
                 $(".alert").text("Foto creada exitosamente.");
                 $(".alert").show().delay(2000).slideUp("slow");
@@ -984,6 +985,7 @@
 
             if (action == 'create') {
                 response = await craeteRegister(category, data);
+                createRowByCategory(category, response);
                 $("#todos_modal .close").click();
                 $(".alert").text("Tarea creada exitosamente.");
                 $(".alert").show().delay(2000).slideUp("slow");
@@ -1015,6 +1017,7 @@
             
             if (action == 'create') {
                 response = await craeteRegister(category, data);
+                createRowByCategory(category, response);
                 $("#albums_modal .close").click();
                 $(".alert").text("Album creado exitosamente.");
                 $(".alert").show().delay(2000).slideUp("slow");
@@ -1031,24 +1034,73 @@
             }            
         }
 
-        function deleteRegister() {
+        async function deleteRegister() {
             $("#delete_modal").submit(async function(event) {
                 event.preventDefault();
-
+                var id = $("#delete_modal input[name='registerSecondId']").val();
                 var category = $("#categoria").val();
                 if (category === "") return;
 
-                fetch(baseUrl + category + '/' + id, {
+                await fetch(baseUrl + category + '/' + id, {
                         method: 'DELETE',
-                    }).then(response => response.json())
-                    .then(data => console.log(data));
-
+                    })
+                    .then((response) => { 
+                        response.json()
+                    })
+                    .then((data) => { 
+                        console.log(data) 
+                    });
+                                
                 row.remove();
 
                 $("#delete_modal .close").click();
                 $(".alert").text("Registro eliminado exitosamente.");
                 $(".alert").show().delay(2000).slideUp("slow");
             });
+        }
+
+        function createRowByCategory(category, response) 
+        {            
+                var dataRow = {};                
+                switch(category) 
+                {
+                    case 'users'   :      
+                        dataRow = {"id": response.id, "name": response.name, "username": response.username};  
+                        break;
+                    case 'posts'   :    
+                        dataRow = {"userId": response.userId,"id": response.id, "title": response.title};  
+                        break;
+                    case 'albums'  :     
+                        dataRow = {"userId": response.userId,"id": response.id, "title": response.title};
+                        break;
+                    case 'todos'   :      
+                        dataRow = {"userId": response.userId,"id": response.id, "title": response.title};
+                        break;            
+                    case 'photos'  :    
+                        dataRow = {"albumId": response.albumId,"id": response.id, "title": response.title};
+                        break;
+                    case 'comments':  
+                        dataRow = {"postId": response.postId,"id": response.id, "title": response.title};
+                        break;                    
+                }
+                if (table) {
+                    table.row.add(dataRow).draw();
+                    var lastRow = table.data().length-1;
+                    var idx = table.row(lastRow).index();
+                    
+                    table.cell( idx, 3 ).data( '<button class="btn btn-options btn-default btn-xs"  type="button" disabled>No disponible</button>' ).draw();
+                    if (category == 'users') 
+                        table.order([ 0, 'desc' ]).draw();
+                    else 
+                        table.order([ 1, 'desc' ]).draw();
+                }
+                // if (table)
+                //     table.row.add(dataRow).draw();
+                // var rowCount = table.data().length-1;
+                // var tempRow = table.row(0).data();
+                // var lastRow = table.row(rowCount).data();
+                // table.row(0).data(lastRow);
+                // table.row(rowCount).data(tempRow);
         }
 
 
@@ -1080,7 +1132,7 @@
                 },
                 submitHandler: function(form) {
                     var category = $("#categoria").val();            
-                    var action = $('#' + category + '_modal input[name="registerId"]').val();
+                    var action = $('#' + category + '_modal input[name="registerSecondId"]').val();
                     if (action == -1) 
                         submitPostForm('create');
                     else 
@@ -1118,7 +1170,7 @@
                 },
                 submitHandler: function(form) {
                     var category = $("#categoria").val();            
-                    var action = $('#' + category + '_modal input[name="registerId"]').val();
+                    var action = $('#' + category + '_modal input[name="registerSecondId"]').val();
                     if (action == -1) 
                         submitAlbumForm('create');
                     else 
@@ -1172,7 +1224,7 @@
                 },
                 submitHandler: function(form) {
                     var category = $("#categoria").val();            
-                    var action = $('#' + category + '_modal input[name="registerId"]').val();
+                    var action = $('#' + category + '_modal input[name="registerSecondId"]').val();
                     if (action == -1) 
                         submitCommentForm('create');
                     else 
@@ -1226,7 +1278,7 @@
                 },
                 submitHandler: function(form) {
                     var category = $("#categoria").val();            
-                    var action = $('#' + category + '_modal input[name="registerId"]').val();
+                    var action = $('#' + category + '_modal input[name="registerSecondId"]').val();
                     if (action == -1) 
                         submitPhotoForm('create');
                     else 
@@ -1264,7 +1316,7 @@
                 },
                 submitHandler: function(form) {
                     var category = $("#categoria").val();            
-                    var action = $('#' + category + '_modal input[name="registerId"]').val();
+                    var action = $('#' + category + '_modal input[name="registerSecondId"]').val();
                     if (action == -1) 
                         submitTodoForm('create');
                     else 
@@ -1390,7 +1442,7 @@
                 },
                 submitHandler: function(form) {
                     var category = $("#categoria").val();            
-                    var action = $('#' + category + '_modal input[name="registerId"]').val();
+                    var action = $('#' + category + '_modal input[name="registerSecondId"]').val();
                     if (action == -1) 
                         submitUserForm('create');
                     else 

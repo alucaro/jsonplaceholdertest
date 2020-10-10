@@ -89,13 +89,13 @@ class DataController extends Controller
         }           
     }
 
-    public function deleteRegister(string $endpoint, string $id, Request $request)
+    public function deleteRegister(string $endpoint, string $id)
     {             
         $isValid = $this->validateRoutes($endpoint);
         if ($isValid) 
         {             
-            $data = $request->all();            
-            $isValid =  $this->validateRegister($data, "required|numeric", "id");            
+            //$data = $request->all();                             
+            $isValid =  $this->validateRegister(["id" => $id], "required|numeric", "id");            
             if ($isValid)
             {
                 $uri    = self::API_BASE_PATH . $endpoint . '/' . $id; 
